@@ -35,39 +35,22 @@ namespace DeliveryApi.Controllers
         public IActionResult register([FromBody]UserRegisterModel model)
         {
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes("1VEGxX0cJiGuTPOuvlQNsNbSh0XGs7CJStmL0QBKC19MMNUy8NHBYdGoOJlIW8Aj4RR729UTUMYTe5-qxKxi1g");
-
-            var tokenDescriptor = new SecurityTokenDescriptor()
-            {
-                NotBefore = DateTime.Now,
-                Expires = DateTime.Now.AddHours(1),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
-                Issuer = "Delivery",
-                Subject = new ClaimsIdentity(new Claim[]
-                {
-                    new Claim(ClaimTypes.Name, model.email)
-                }),
-                Audience = "1488"
-            };
-
             var user = _users.Users.Find(model.email);
+
             if (user == null)
             {
-                var token = tokenHandler.CreateToken(tokenDescriptor);
 
-
-                _users.Add(model);
-                _users.SaveChanges();
-
-                var bearer = tokenHandler.WriteToken(token);
+                var bearer = CreateToken();
 
                 var emailToTokenModel = new EmailToTokenModel()
                 {
                     email = model.email,
                     token = bearer
                 };
+
+                _users.Add(model);
                 _users.Add(emailToTokenModel);
+                _users.SaveChanges();
 
 
                 return Ok(bearer);
@@ -82,33 +65,17 @@ namespace DeliveryApi.Controllers
 
         public IActionResult login([FromBody]LoginCredentials model)
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes("1VEGxX0cJiGuTPOuvlQNsNbSh0XGs7CJStmL0QBKC19MMNUy8NHBYdGoOJlIW8Aj4RR729UTUMYTe5-qxKxi1g");
-
-            var tokenDescriptor = new SecurityTokenDescriptor()
-            {
-                NotBefore = DateTime.Now,
-                Expires = DateTime.Now.AddHours(1),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
-                Issuer = "Delivery",
-                Subject = new ClaimsIdentity(new Claim[]
-                {
-                    new Claim(ClaimTypes.Name, model.email)
-                }),
-                Audience = "1488"
-            };
-
-
 
             var user = _users.Users.Find(model.email);
-            if (user!=null)
-            {
-                var token = tokenHandler.CreateToken(tokenDescriptor);
 
-                var bearer = tokenHandler.WriteToken(token);
+            if (user!=null && user.password == model.password)
+            {
+                var bearer = CreateToken();
 
                 _users.EmailToTokens.Find(model.email)
                     .token = bearer;
+
+                _users.SaveChanges();
 
                 return Ok(bearer);
             }
@@ -120,7 +87,24 @@ namespace DeliveryApi.Controllers
 
         public IActionResult logout()
         {
-            return Ok();
+            if (Request.Headers.TryGetValue("Authorization", out StringValues authToken))
+            {
+                var token = authToken.ToString()
+                    .Substring(7);
+
+                if (CheckToken(token))
+                {
+                    _users.EmailToTokens
+                        .SingleOrDefault(model => model.token == token)
+                        .token = CreateToken();
+
+                    _users.SaveChanges();
+
+                    return Ok();
+                }
+             
+            }
+            return Ok("nonono");
             // Токены изменяются в дб 
         }
 
@@ -131,9 +115,30 @@ namespace DeliveryApi.Controllers
         {
             if (Request.Headers.TryGetValue("Authorization", out StringValues authToken))
             {
-                return Ok(authToken);
+                var token = authToken.ToString()
+                    .Substring(7);
+
+                
+
+                if (CheckToken(token))
+                {
+                    string userEmail = _users.EmailToTokens
+                        .SingleOrDefault(model => model.token == token)
+                        .email;
+                    var usermodel = _users.Users.Find(userEmail);
+                    var user = new UserDto
+                    {
+                        fullName = usermodel.fullName,
+                        email = usermodel.email,
+                        gender = usermodel.gender,
+                        birthDate = usermodel.birthDate,
+                        phoneNumber = usermodel.phoneNumber
+                    };
+                    return Ok(user);
+                }
+
             }
-            return Ok();
+            return Ok("nonono");
             //По токену ведется поиск в бд и возвращает UserDto
         }
 
@@ -142,11 +147,62 @@ namespace DeliveryApi.Controllers
 
         public IActionResult put([FromBody]UserEditModel model ) //Тут нужно получить токен, по нему найти юзера в бд
         {
-            // после нахождения юзера создать изменить полученные данные
-            return Ok();
+
+            if (Request.Headers.TryGetValue("Authorization", out StringValues authToken))
+            {
+                var token = authToken.ToString()
+                    .Substring(7);
+
+                if (CheckToken(token))
+                {
+                    string userEmail = _users.EmailToTokens
+                        .SingleOrDefault(model => model.token == token)
+                        .email;
+
+                    _users.Users.Find(userEmail).fullName = model.fullName;
+                    _users.Users.Find(userEmail).birthDate = model.birthDate;
+                    _users.Users.Find(userEmail).gender = model.gender;
+                    _users.Users.Find(userEmail).addressId = model.addressId;
+                    _users.Users.Find(userEmail).phoneNumber = model.phoneNumber;
+
+                    _users.SaveChanges();
+
+                    return Ok();
+                }
+
+            }
+                // после нахождения юзера создать изменить полученные данные
+                return Ok();
         }
 
+        private string? CreateToken()
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes("1VEGxX0cJiGuTPOuvlQNsNbSh0XGs7CJStmL0QBKC19MMNUy8NHBYdGoOJlIW8Aj4RR729UTUMYTe5-qxKxi1g");
 
+            var tokenDescriptor = new SecurityTokenDescriptor()
+            {
+                NotBefore = DateTime.Now,
+                Expires = DateTime.Now.AddHours(1),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
+                Issuer = "Delivery",
+                Subject = new ClaimsIdentity(new Claim[]{}),
+                Audience = "1488"
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            var bearer = tokenHandler.WriteToken(token);
+
+            return bearer;
+        }
+        private bool CheckToken(string token)
+        {
+            if (_users.EmailToTokens.SingleOrDefault(model => model.token == token) != default(EmailToTokenModel))
+            {
+                return true;
+            }
+            return false;
+        }
 
     }
 }

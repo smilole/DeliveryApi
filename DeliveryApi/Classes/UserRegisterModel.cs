@@ -27,6 +27,8 @@ namespace Delivery.Api.Classes
 
         public DateOnly? birthDate { get; set; }
 
+        public Guid? addressId { get; set; }
+
         [Required]
         public Gender gender { get; set; }
 

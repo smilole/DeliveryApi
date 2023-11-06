@@ -9,7 +9,7 @@ namespace Delivery.Api.Classes
 
         public string fullName { get; set; }
 
-        public DateTime? birthDate { get; set; }
+        public DateOnly? birthDate { get; set; }
 
         [Required]
         public Gender gender { get; set; }
