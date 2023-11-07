@@ -188,7 +188,7 @@ namespace DeliveryApi.Controllers
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
                 Issuer = "Delivery",
                 Subject = new ClaimsIdentity(new Claim[]{
-                new Claim(ClaimTypes.Email, email)
+                new Claim(ClaimTypes.Name, email)
                 }),
                 Audience = "1488"
             };

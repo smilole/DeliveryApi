@@ -1,12 +1,21 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace DeliveryApi.Models
 {
     public class DishInBasketModel
     {
+        [Key]        
+        
         public Guid DishId { get; set; }
 
-        [Key]
+        
         public Guid UserId { get; set; }
+
+        
+
     }
+
+    
+
 }

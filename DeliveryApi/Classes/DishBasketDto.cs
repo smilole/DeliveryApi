@@ -15,8 +15,9 @@ namespace Delivery.Api
         public double totalPrice { get; set; }
         [Required]
         public int amount { get; set; }
-        [Required]
+
         public string? image { get; set; }
+
 
     }
 }
