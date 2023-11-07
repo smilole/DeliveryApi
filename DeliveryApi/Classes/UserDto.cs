@@ -5,7 +5,7 @@ namespace Delivery.Api.Classes
 {
     public class UserDto
     {
-        //public Guid id { get; set; }
+        public Guid id { get; set; }
 
         [Required]
         [MinLength(1)]

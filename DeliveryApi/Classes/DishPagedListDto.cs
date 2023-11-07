@@ -1,8 +1,8 @@
 ﻿namespace Delivery.Api
 {
-    public class DiahPagedListDto
+    public class DishPagedListDto
     {
-        public DishDto? dishes {  get; set; }
+        public IQueryable? dishes {  get; set; }
 
         public PageInfoModel pagination { get; set; }
     }

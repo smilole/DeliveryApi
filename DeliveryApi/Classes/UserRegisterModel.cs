@@ -21,7 +21,6 @@ namespace Delivery.Api.Classes
         [Required]
         [MinLength(1)]
 
-        [Key]
         [EmailAddress]
         public string email { get; set; }
 

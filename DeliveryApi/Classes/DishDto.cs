@@ -4,7 +4,7 @@ namespace Delivery.Api
 {
     public class DishDto
     {
-        public Guid id { get; set; }
+        public Guid? id { get; set; }
 
         [Required]
         [MinLength(1)]

@@ -30,17 +30,17 @@ namespace DeliveryApi.Controllers
         }
 
         [HttpPost]
-        [Route("/register")]
+        [Route("/registration")]
         
         public IActionResult register([FromBody]UserRegisterModel model)
         {
 
-            var user = _users.Users.Find(model.email);
+            var user = _users.Users.SingleOrDefault(x => x.email == model.email);
 
-            if (user == null)
+            if (user == default(UserRegisterModel))
             {
 
-                var bearer = CreateToken();
+                var bearer = CreateToken(model.email);
 
                 var emailToTokenModel = new EmailToTokenModel()
                 {
@@ -66,13 +66,13 @@ namespace DeliveryApi.Controllers
         public IActionResult login([FromBody]LoginCredentials model)
         {
 
-            var user = _users.Users.Find(model.email);
+            var user = _users.Users.SingleOrDefault(x => x.email == model.email);
 
             if (user!=null && user.password == model.password)
             {
-                var bearer = CreateToken();
+                var bearer = CreateToken(model.email);
 
-                _users.EmailToTokens.Find(model.email)
+                _users.EmailToTokens.SingleOrDefault(x => x.email == model.email)
                     .token = bearer;
 
                 _users.SaveChanges();
@@ -96,7 +96,8 @@ namespace DeliveryApi.Controllers
                 {
                     _users.EmailToTokens
                         .SingleOrDefault(model => model.token == token)
-                        .token = CreateToken();
+                        .token = CreateToken(_users.EmailToTokens
+                        .SingleOrDefault(model => model.token == token).email);
 
                     _users.SaveChanges();
 
@@ -172,10 +173,10 @@ namespace DeliveryApi.Controllers
 
             }
                 // после нахождения юзера создать изменить полученные данные
-                return Ok();
+                return Ok("byebitch");
         }
 
-        private string? CreateToken()
+        private string? CreateToken(string email)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes("1VEGxX0cJiGuTPOuvlQNsNbSh0XGs7CJStmL0QBKC19MMNUy8NHBYdGoOJlIW8Aj4RR729UTUMYTe5-qxKxi1g");
@@ -186,7 +187,9 @@ namespace DeliveryApi.Controllers
                 Expires = DateTime.Now.AddHours(1),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
                 Issuer = "Delivery",
-                Subject = new ClaimsIdentity(new Claim[]{}),
+                Subject = new ClaimsIdentity(new Claim[]{
+                new Claim(ClaimTypes.Email, email)
+                }),
                 Audience = "1488"
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);

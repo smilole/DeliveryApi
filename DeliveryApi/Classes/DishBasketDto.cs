@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Delivery.Api.Classes;
+using System.ComponentModel.DataAnnotations;
 
 namespace Delivery.Api
 {
@@ -16,5 +17,7 @@ namespace Delivery.Api
         public int amount { get; set; }
         [Required]
         public string? image { get; set; }
+
     }
 }
+ 
